@@ -3,3 +3,53 @@ syntax = "proto3";
 package auction;
 
 option go_package = "auction/proto";
+
+service Server {
+  // Internal RPC
+  rpc UpdateBid(ServerBid) returns (Acknowledgement);
+
+  rpc Election(RingLeaderTopDawgG) returns (Acknowledgement);
+
+  rpc Elected(RingLeaderTopDawgG) returns (Acknowledgement);
+
+  
+  // Client RPC
+  rpc Bid(ClientBid) returns (Acknowledgement);
+
+  rpc WhoIsNewLeader(Empty) returns (NewPrimary);
+
+  // - client ask occasionally about the result
+  rpc Result(Empty) returns (AuctionStatus);
+}
+
+// Info about new leader! :O
+message NewPrimary {
+  int32 Port = 1;
+}
+
+// Bid from the client side
+message ClientBid {
+  int32 Bid = 1;
+}
+
+// can be used to send both: "highest bid is..." & "result is: "
+message AuctionStatus {
+  string Status = 1;
+}
+
+// Bid messages between server nodes
+message ServerBid {
+  int32 ClientId = 1;
+  int32 Bid = 2;
+}
+
+// Used between server nodes during election
+message RingLeaderTopDawgG {
+  int32 ProcessID = 1;
+  int32 Bid = 2;
+}
+
+// The void
+message Acknowledgement {}
+
+message Empty {}
