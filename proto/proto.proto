@@ -4,7 +4,7 @@ package auction;
 
 option go_package = "auction/proto";
 
-service Server {
+service Auction {
   // Internal RPC
   rpc UpdateBid(ServerBid) returns (Acknowledgement);
 

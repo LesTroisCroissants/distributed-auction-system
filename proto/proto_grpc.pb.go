@@ -19,18 +19,18 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Server_UpdateBid_FullMethodName      = "/auction.Server/UpdateBid"
-	Server_Election_FullMethodName       = "/auction.Server/Election"
-	Server_Elected_FullMethodName        = "/auction.Server/Elected"
-	Server_Bid_FullMethodName            = "/auction.Server/Bid"
-	Server_WhoIsNewLeader_FullMethodName = "/auction.Server/WhoIsNewLeader"
-	Server_Result_FullMethodName         = "/auction.Server/Result"
+	Auction_UpdateBid_FullMethodName      = "/auction.Auction/UpdateBid"
+	Auction_Election_FullMethodName       = "/auction.Auction/Election"
+	Auction_Elected_FullMethodName        = "/auction.Auction/Elected"
+	Auction_Bid_FullMethodName            = "/auction.Auction/Bid"
+	Auction_WhoIsNewLeader_FullMethodName = "/auction.Auction/WhoIsNewLeader"
+	Auction_Result_FullMethodName         = "/auction.Auction/Result"
 )
 
-// ServerClient is the client API for Server service.
+// AuctionClient is the client API for Auction service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ServerClient interface {
+type AuctionClient interface {
 	// Internal RPC
 	UpdateBid(ctx context.Context, in *ServerBid, opts ...grpc.CallOption) (*Acknowledgement, error)
 	Election(ctx context.Context, in *RingLeaderTopDawgG, opts ...grpc.CallOption) (*Acknowledgement, error)
@@ -42,72 +42,72 @@ type ServerClient interface {
 	Result(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuctionStatus, error)
 }
 
-type serverClient struct {
+type auctionClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewServerClient(cc grpc.ClientConnInterface) ServerClient {
-	return &serverClient{cc}
+func NewAuctionClient(cc grpc.ClientConnInterface) AuctionClient {
+	return &auctionClient{cc}
 }
 
-func (c *serverClient) UpdateBid(ctx context.Context, in *ServerBid, opts ...grpc.CallOption) (*Acknowledgement, error) {
+func (c *auctionClient) UpdateBid(ctx context.Context, in *ServerBid, opts ...grpc.CallOption) (*Acknowledgement, error) {
 	out := new(Acknowledgement)
-	err := c.cc.Invoke(ctx, Server_UpdateBid_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auction_UpdateBid_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serverClient) Election(ctx context.Context, in *RingLeaderTopDawgG, opts ...grpc.CallOption) (*Acknowledgement, error) {
+func (c *auctionClient) Election(ctx context.Context, in *RingLeaderTopDawgG, opts ...grpc.CallOption) (*Acknowledgement, error) {
 	out := new(Acknowledgement)
-	err := c.cc.Invoke(ctx, Server_Election_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auction_Election_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serverClient) Elected(ctx context.Context, in *RingLeaderTopDawgG, opts ...grpc.CallOption) (*Acknowledgement, error) {
+func (c *auctionClient) Elected(ctx context.Context, in *RingLeaderTopDawgG, opts ...grpc.CallOption) (*Acknowledgement, error) {
 	out := new(Acknowledgement)
-	err := c.cc.Invoke(ctx, Server_Elected_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auction_Elected_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serverClient) Bid(ctx context.Context, in *ClientBid, opts ...grpc.CallOption) (*Acknowledgement, error) {
+func (c *auctionClient) Bid(ctx context.Context, in *ClientBid, opts ...grpc.CallOption) (*Acknowledgement, error) {
 	out := new(Acknowledgement)
-	err := c.cc.Invoke(ctx, Server_Bid_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auction_Bid_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serverClient) WhoIsNewLeader(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NewPrimary, error) {
+func (c *auctionClient) WhoIsNewLeader(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*NewPrimary, error) {
 	out := new(NewPrimary)
-	err := c.cc.Invoke(ctx, Server_WhoIsNewLeader_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auction_WhoIsNewLeader_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *serverClient) Result(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuctionStatus, error) {
+func (c *auctionClient) Result(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*AuctionStatus, error) {
 	out := new(AuctionStatus)
-	err := c.cc.Invoke(ctx, Server_Result_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Auction_Result_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ServerServer is the server API for Server service.
-// All implementations must embed UnimplementedServerServer
+// AuctionServer is the server API for Auction service.
+// All implementations must embed UnimplementedAuctionServer
 // for forward compatibility
-type ServerServer interface {
+type AuctionServer interface {
 	// Internal RPC
 	UpdateBid(context.Context, *ServerBid) (*Acknowledgement, error)
 	Election(context.Context, *RingLeaderTopDawgG) (*Acknowledgement, error)
@@ -117,182 +117,182 @@ type ServerServer interface {
 	WhoIsNewLeader(context.Context, *Empty) (*NewPrimary, error)
 	// - client ask occasionally about the result
 	Result(context.Context, *Empty) (*AuctionStatus, error)
-	mustEmbedUnimplementedServerServer()
+	mustEmbedUnimplementedAuctionServer()
 }
 
-// UnimplementedServerServer must be embedded to have forward compatible implementations.
-type UnimplementedServerServer struct {
+// UnimplementedAuctionServer must be embedded to have forward compatible implementations.
+type UnimplementedAuctionServer struct {
 }
 
-func (UnimplementedServerServer) UpdateBid(context.Context, *ServerBid) (*Acknowledgement, error) {
+func (UnimplementedAuctionServer) UpdateBid(context.Context, *ServerBid) (*Acknowledgement, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateBid not implemented")
 }
-func (UnimplementedServerServer) Election(context.Context, *RingLeaderTopDawgG) (*Acknowledgement, error) {
+func (UnimplementedAuctionServer) Election(context.Context, *RingLeaderTopDawgG) (*Acknowledgement, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Election not implemented")
 }
-func (UnimplementedServerServer) Elected(context.Context, *RingLeaderTopDawgG) (*Acknowledgement, error) {
+func (UnimplementedAuctionServer) Elected(context.Context, *RingLeaderTopDawgG) (*Acknowledgement, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Elected not implemented")
 }
-func (UnimplementedServerServer) Bid(context.Context, *ClientBid) (*Acknowledgement, error) {
+func (UnimplementedAuctionServer) Bid(context.Context, *ClientBid) (*Acknowledgement, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Bid not implemented")
 }
-func (UnimplementedServerServer) WhoIsNewLeader(context.Context, *Empty) (*NewPrimary, error) {
+func (UnimplementedAuctionServer) WhoIsNewLeader(context.Context, *Empty) (*NewPrimary, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WhoIsNewLeader not implemented")
 }
-func (UnimplementedServerServer) Result(context.Context, *Empty) (*AuctionStatus, error) {
+func (UnimplementedAuctionServer) Result(context.Context, *Empty) (*AuctionStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Result not implemented")
 }
-func (UnimplementedServerServer) mustEmbedUnimplementedServerServer() {}
+func (UnimplementedAuctionServer) mustEmbedUnimplementedAuctionServer() {}
 
-// UnsafeServerServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ServerServer will
+// UnsafeAuctionServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuctionServer will
 // result in compilation errors.
-type UnsafeServerServer interface {
-	mustEmbedUnimplementedServerServer()
+type UnsafeAuctionServer interface {
+	mustEmbedUnimplementedAuctionServer()
 }
 
-func RegisterServerServer(s grpc.ServiceRegistrar, srv ServerServer) {
-	s.RegisterService(&Server_ServiceDesc, srv)
+func RegisterAuctionServer(s grpc.ServiceRegistrar, srv AuctionServer) {
+	s.RegisterService(&Auction_ServiceDesc, srv)
 }
 
-func _Server_UpdateBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auction_UpdateBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ServerBid)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServerServer).UpdateBid(ctx, in)
+		return srv.(AuctionServer).UpdateBid(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Server_UpdateBid_FullMethodName,
+		FullMethod: Auction_UpdateBid_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerServer).UpdateBid(ctx, req.(*ServerBid))
+		return srv.(AuctionServer).UpdateBid(ctx, req.(*ServerBid))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Server_Election_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auction_Election_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RingLeaderTopDawgG)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServerServer).Election(ctx, in)
+		return srv.(AuctionServer).Election(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Server_Election_FullMethodName,
+		FullMethod: Auction_Election_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerServer).Election(ctx, req.(*RingLeaderTopDawgG))
+		return srv.(AuctionServer).Election(ctx, req.(*RingLeaderTopDawgG))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Server_Elected_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auction_Elected_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RingLeaderTopDawgG)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServerServer).Elected(ctx, in)
+		return srv.(AuctionServer).Elected(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Server_Elected_FullMethodName,
+		FullMethod: Auction_Elected_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerServer).Elected(ctx, req.(*RingLeaderTopDawgG))
+		return srv.(AuctionServer).Elected(ctx, req.(*RingLeaderTopDawgG))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Server_Bid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auction_Bid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClientBid)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServerServer).Bid(ctx, in)
+		return srv.(AuctionServer).Bid(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Server_Bid_FullMethodName,
+		FullMethod: Auction_Bid_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerServer).Bid(ctx, req.(*ClientBid))
+		return srv.(AuctionServer).Bid(ctx, req.(*ClientBid))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Server_WhoIsNewLeader_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auction_WhoIsNewLeader_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServerServer).WhoIsNewLeader(ctx, in)
+		return srv.(AuctionServer).WhoIsNewLeader(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Server_WhoIsNewLeader_FullMethodName,
+		FullMethod: Auction_WhoIsNewLeader_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerServer).WhoIsNewLeader(ctx, req.(*Empty))
+		return srv.(AuctionServer).WhoIsNewLeader(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Server_Result_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Auction_Result_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServerServer).Result(ctx, in)
+		return srv.(AuctionServer).Result(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Server_Result_FullMethodName,
+		FullMethod: Auction_Result_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServerServer).Result(ctx, req.(*Empty))
+		return srv.(AuctionServer).Result(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Server_ServiceDesc is the grpc.ServiceDesc for Server service.
+// Auction_ServiceDesc is the grpc.ServiceDesc for Auction service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Server_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "auction.Server",
-	HandlerType: (*ServerServer)(nil),
+var Auction_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "auction.Auction",
+	HandlerType: (*AuctionServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "UpdateBid",
-			Handler:    _Server_UpdateBid_Handler,
+			Handler:    _Auction_UpdateBid_Handler,
 		},
 		{
 			MethodName: "Election",
-			Handler:    _Server_Election_Handler,
+			Handler:    _Auction_Election_Handler,
 		},
 		{
 			MethodName: "Elected",
-			Handler:    _Server_Elected_Handler,
+			Handler:    _Auction_Elected_Handler,
 		},
 		{
 			MethodName: "Bid",
-			Handler:    _Server_Bid_Handler,
+			Handler:    _Auction_Bid_Handler,
 		},
 		{
 			MethodName: "WhoIsNewLeader",
-			Handler:    _Server_WhoIsNewLeader_Handler,
+			Handler:    _Auction_WhoIsNewLeader_Handler,
 		},
 		{
 			MethodName: "Result",
-			Handler:    _Server_Result_Handler,
+			Handler:    _Auction_Result_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
