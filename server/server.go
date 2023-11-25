@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"distributed-auction-system/proto"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -15,13 +16,14 @@ import (
 )
 
 var (
-	serverPorts = [3]int{8080, 8081, 8082}
-	servers     = make(map[int]proto.AuctionClient) // map port to connections
-	serverId    = flag.Int("id", 1, "server id")
-	timeout     = 2 * time.Second //random assumption
-	isElecting  = false
-	leader      = 8080
-	bid         int32
+	serverPorts    = [3]int{8080, 8081, 8082}
+	servers        = make(map[int]proto.AuctionClient) // map port to connections
+	serverId       = flag.Int("id", 1, "server id")
+	timeout        = 2 * time.Second //random assumption
+	isElecting     = false
+	ongoingAuction = false
+	leader         = 8080
+	bid            int32
 )
 
 type Server struct {
@@ -43,6 +45,10 @@ func main() {
 			connectToServer(p)
 		}
 	}
+
+	ongoingAuction = true
+	time.Sleep(20 * time.Second)
+	ongoingAuction = false
 
 	time.Sleep(time.Hour)
 }
@@ -77,19 +83,41 @@ func PassElection(ctx context.Context, currentCandidate *proto.RingLeaderTopDawg
 
 		deadlineContext, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
 		defer cancel()
-		neighbour.Election(deadlineContext, currentCandidate)
+		_, err := neighbour.Election(deadlineContext, currentCandidate)
+
+		fmt.Println("after election call")
+
+		if err != nil {
+			continue
+		}
 
 		// Check for timeout reached
 		if deadlineContext.Err() == nil {
+			fmt.Println("No election error")
 			break
 		}
+		fmt.Println("next neighbour in election")
 		// pass to next neighbour if timeout
 	}
 }
 
 func AnnounceResult(currentCandidate *proto.RingLeaderTopDawgG) {
 	for _, server := range servers {
-		server.Elected(context.Background(), currentCandidate)
+		go func(replica proto.AuctionClient) {
+			deadlineContext, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
+			defer cancel()
+			replica.Elected(deadlineContext, currentCandidate)
+		}(server)
+	}
+}
+
+func AnnounceNewBid(newBid *proto.ServerBid) {
+	for _, server := range servers {
+		go func(replica proto.AuctionClient) {
+			deadlineContext, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
+			defer cancel()
+			replica.UpdateBid(deadlineContext, newBid)
+		}(server)
 	}
 }
 
@@ -101,13 +129,16 @@ func (server *Server) Elected(ctx context.Context, electedLeader *proto.RingLead
 }
 
 func (server *Server) WhoIsNewLeader(ctx context.Context, void *proto.Empty) (*proto.NewPrimary, error) {
+	fmt.Println("Who is new leader?")
 	if !isElecting {
 		isElecting = true
+		fmt.Println("is electing")
 		PassElection(ctx, &proto.RingLeaderTopDawgG{
 			ProcessID: int32(server.port),
 			Bid:       bid,
 		})
 	}
+	fmt.Println("After: if statement")
 
 	// wait for election to finish
 	for isElecting {
@@ -119,17 +150,38 @@ func (server *Server) WhoIsNewLeader(ctx context.Context, void *proto.Empty) (*p
 	}, nil
 }
 
-func (server *Server) Bid(context.Context, *proto.ClientBid) (*proto.Acknowledgement, error) {
+func (server *Server) Bid(ctx context.Context, clientBid *proto.ClientBid) (*proto.Acknowledgement, error) {
 	fmt.Println("Bid has been called!")
-	return &proto.Acknowledgement{}, nil
+	var err error
+	if !ongoingAuction {
+		err = errors.New("auction is over")
+	} else if clientBid.Bid > bid {
+		bid = clientBid.Bid
+		AnnounceNewBid(&proto.ServerBid{Bid: bid})
+		err = nil
+	} else {
+		err = errors.New("Bid too low")
+	}
+
+	return &proto.Acknowledgement{}, err
 }
 
-func (server *Server) UpdateBid(context.Context, *proto.ServerBid) (*proto.Acknowledgement, error) {
+func (server *Server) UpdateBid(ctx context.Context, serverBid *proto.ServerBid) (*proto.Acknowledgement, error) {
+	bid = serverBid.Bid
 	return &proto.Acknowledgement{}, nil
 }
 
 func (server *Server) Result(context.Context, *proto.Empty) (*proto.AuctionStatus, error) {
-	return nil, nil // todo: needs to return auction status
+	var status string
+	if ongoingAuction {
+		status = "highest bid is " + strconv.Itoa(int(bid))
+	} else {
+		status = "result is " + strconv.Itoa(int(bid))
+	}
+
+	return &proto.AuctionStatus{
+		Status: status,
+	}, nil
 }
 
 func connectToServer(port int) {
