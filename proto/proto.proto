@@ -12,6 +12,8 @@ service Auction {
 
   rpc Elected(RingLeaderTopDawgG) returns (Acknowledgement);
 
+  rpc StartAuction(AuctionDuration) returns (Empty);
+
   
   // Client RPC
   rpc Bid(ClientBid) returns (Acknowledgement);
@@ -25,6 +27,11 @@ service Auction {
 // Info about new leader! :O
 message NewPrimary {
   int32 Port = 1;
+}
+
+// Auction duration in seconds
+message AuctionDuration {
+  int32 Duration = 1;
 }
 
 // Bid from the client side

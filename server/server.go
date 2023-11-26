@@ -45,9 +45,7 @@ func main() {
 		}
 	}
 
-	ongoingAuction = true
-	time.Sleep(40 * time.Second)
-	ongoingAuction = false
+	AnnounceAuction(30)
 
 	time.Sleep(time.Hour)
 }
@@ -101,6 +99,26 @@ func AnnounceNewBid(newBid *proto.ServerBid) {
 			replica.UpdateBid(context.Background(), newBid)
 		}(server)
 	}
+}
+
+func AnnounceAuction(duration int) {
+	for _, server := range servers {
+		go func(replica proto.AuctionClient) {
+			replica.StartAuction(context.Background(), &proto.AuctionDuration{Duration: int32(duration)})
+		}(server)
+	}
+	go RunAuction(duration)
+}
+
+func RunAuction(duration int) {
+	ongoingAuction = true
+	time.Sleep(time.Duration(duration) * time.Second)
+	ongoingAuction = false
+}
+
+func (Server) StartAuction(context.Context, *proto.AuctionDuration) (*proto.Empty, error) {
+	go RunAuction(30)
+	return &proto.Empty{}, nil
 }
 
 func (server *Server) Elected(ctx context.Context, electedLeader *proto.RingLeaderTopDawgG) (*proto.Acknowledgement, error) {
