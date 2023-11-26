@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,7 +14,6 @@ import (
 var (
 	server      proto.AuctionClient
 	serverPorts = [3]int{8080, 8081, 8082}
-	timeout     = 2 * time.Second
 )
 
 type Server struct {
@@ -41,42 +39,41 @@ func main() {
 }
 
 func findServer(port int) {
+	fmt.Println("Connection has been lost, finding new server")
 	connectToServer(port)
 	primary, _ := server.WhoIsNewLeader(context.Background(), &proto.Empty{}) // timeout not implemented
 	connectToServer(int(primary.Port))
 }
 
-func deadline() time.Time {
-	return time.Now().Add(timeout)
+func getErrorMsg(err string) string {
+	text := strings.Split(err, " = ")
+	return text[2]
 }
 
 func makeBid(amount int) {
-	deadlineContext, cancel := context.WithDeadline(context.Background(), deadline())
-	defer cancel()
-	_, err := server.Bid(deadlineContext, &proto.ClientBid{Bid: int32(amount)})
+	_, err := server.Bid(context.Background(), &proto.ClientBid{Bid: int32(amount)})
+
+	if err != nil {
+		if strings.Contains(err.Error(), "connection refused") {
+			findServer(serverPorts[1])
+			makeBid(amount)
+		} else {
+			fmt.Println("Server:", getErrorMsg(err.Error()))
+		}
+	} else {
+		fmt.Println("Bid registered!")
+	}
+}
+
+func checkStatus() string {
+	result, err := server.Result(context.Background(), &proto.Empty{})
 
 	if err != nil {
 		if strings.Contains(err.Error(), "connection refused") {
 			findServer(serverPorts[1])
 		} else {
-			fmt.Println(err.Error())
+			fmt.Println("Server:", getErrorMsg(err.Error()))
 		}
-	}
-
-	if deadlineContext.Err() != nil {
-		fmt.Println("Server has crashed, finding new server")
-		findServer(serverPorts[1])
-	}
-}
-
-func checkStatus() string {
-	deadlineContext, cancel := context.WithDeadline(context.Background(), deadline())
-	defer cancel()
-	result, _ := server.Result(deadlineContext, &proto.Empty{})
-
-	if deadlineContext.Err() != nil {
-		fmt.Println("Server has crashed, finding new server")
-		findServer(serverPorts[1])
 	}
 
 	return result.Status

@@ -19,7 +19,6 @@ var (
 	serverPorts    = [3]int{8080, 8081, 8082}
 	servers        = make(map[int]proto.AuctionClient) // map port to connections
 	serverId       = flag.Int("id", 1, "server id")
-	timeout        = 2 * time.Second //random assumption
 	isElecting     = false
 	ongoingAuction = false
 	leader         = 8080
@@ -47,7 +46,7 @@ func main() {
 	}
 
 	ongoingAuction = true
-	time.Sleep(20 * time.Second)
+	time.Sleep(40 * time.Second)
 	ongoingAuction = false
 
 	time.Sleep(time.Hour)
@@ -79,34 +78,19 @@ func (server *Server) Election(ctx context.Context, currentCandidate *proto.Ring
 func PassElection(ctx context.Context, currentCandidate *proto.RingLeaderTopDawgG) {
 	for i := 0; i < 2; i++ { //try to contact 2 subsequent nodes in ring. Could be modified to loop over all nodes
 		neighbour := servers[8080+((*serverId+i)%3)]
-		fmt.Println("neighbour:", 8080+((*serverId+i)%3))
 
-		deadlineContext, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
-		defer cancel()
-		_, err := neighbour.Election(deadlineContext, currentCandidate)
+		_, err := neighbour.Election(context.Background(), currentCandidate)
 
-		fmt.Println("after election call")
-
-		if err != nil {
-			continue
-		}
-
-		// Check for timeout reached
-		if deadlineContext.Err() == nil {
-			fmt.Println("No election error")
+		if err == nil {
 			break
 		}
-		fmt.Println("next neighbour in election")
-		// pass to next neighbour if timeout
 	}
 }
 
 func AnnounceResult(currentCandidate *proto.RingLeaderTopDawgG) {
 	for _, server := range servers {
 		go func(replica proto.AuctionClient) {
-			deadlineContext, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
-			defer cancel()
-			replica.Elected(deadlineContext, currentCandidate)
+			replica.Elected(context.Background(), currentCandidate)
 		}(server)
 	}
 }
@@ -114,9 +98,7 @@ func AnnounceResult(currentCandidate *proto.RingLeaderTopDawgG) {
 func AnnounceNewBid(newBid *proto.ServerBid) {
 	for _, server := range servers {
 		go func(replica proto.AuctionClient) {
-			deadlineContext, cancel := context.WithDeadline(context.Background(), time.Now().Add(timeout))
-			defer cancel()
-			replica.UpdateBid(deadlineContext, newBid)
+			replica.UpdateBid(context.Background(), newBid)
 		}(server)
 	}
 }
@@ -128,21 +110,19 @@ func (server *Server) Elected(ctx context.Context, electedLeader *proto.RingLead
 	return &proto.Acknowledgement{}, nil
 }
 
+// API for client
 func (server *Server) WhoIsNewLeader(ctx context.Context, void *proto.Empty) (*proto.NewPrimary, error) {
-	fmt.Println("Who is new leader?")
 	if !isElecting {
 		isElecting = true
-		fmt.Println("is electing")
 		PassElection(ctx, &proto.RingLeaderTopDawgG{
 			ProcessID: int32(server.port),
 			Bid:       bid,
 		})
 	}
-	fmt.Println("After: if statement")
 
 	// wait for election to finish
 	for isElecting {
-		time.Sleep(5 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	return &proto.NewPrimary{
@@ -150,8 +130,8 @@ func (server *Server) WhoIsNewLeader(ctx context.Context, void *proto.Empty) (*p
 	}, nil
 }
 
+// API for client
 func (server *Server) Bid(ctx context.Context, clientBid *proto.ClientBid) (*proto.Acknowledgement, error) {
-	fmt.Println("Bid has been called!")
 	var err error
 	if !ongoingAuction {
 		err = errors.New("auction is over")
@@ -171,6 +151,7 @@ func (server *Server) UpdateBid(ctx context.Context, serverBid *proto.ServerBid)
 	return &proto.Acknowledgement{}, nil
 }
 
+// API for client
 func (server *Server) Result(context.Context, *proto.Empty) (*proto.AuctionStatus, error) {
 	var status string
 	if ongoingAuction {
