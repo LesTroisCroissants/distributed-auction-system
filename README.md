@@ -23,3 +23,9 @@ Server 3: `go run server/server.go -id 3`
 Starting a client can be done by running the following command from the root directory:
 
 `go run client/client.go`
+
+## Biding & getting auction status from the client
+
+Bidding can be done, by simply writing an integer to the CLI on the client. The client will receive a response from the server for this.
+
+Getting the auction status, can be done by writing `status` to the CLI from a client.
