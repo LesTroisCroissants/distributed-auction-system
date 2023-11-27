@@ -45,7 +45,9 @@ func main() {
 		}
 	}
 
-	AnnounceAuction(30)
+	if server.port == 8080 {
+		AnnounceAuction(30)
+	}
 
 	time.Sleep(time.Hour)
 }
