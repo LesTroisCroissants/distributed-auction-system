@@ -20,6 +20,6 @@ Server 3: `go run server/server.go -id 3`
 
 ## Starting the client(s)
 
-Starting a client can be done by running the following command:
+Starting a client can be done by running the following command from the root directory:
 
 `go run client/client.go`
