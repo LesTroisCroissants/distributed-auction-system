@@ -4,6 +4,7 @@ import (
 	"context"
 	"distributed-auction-system/proto"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -30,7 +31,7 @@ func main() {
 		//check if server is online
 
 		if strings.ToLower(userInput) == "status" {
-			fmt.Println(checkStatus())
+			log.Println(checkStatus())
 		} else {
 			bid, _ := strconv.Atoi(userInput)
 			makeBid(bid)
@@ -39,10 +40,10 @@ func main() {
 }
 
 func findServer(port int) {
-	fmt.Println("Connection has been lost, finding new server")
+	log.Println("Connection has been lost, finding new server")
 	connectToServer(port)
 	primary, _ := server.WhoIsNewLeader(context.Background(), &proto.Empty{}) // timeout not implemented
-	fmt.Println("Found the new primary!")
+	log.Println("Found the new primary!")
 	connectToServer(int(primary.Port))
 }
 
@@ -59,10 +60,10 @@ func makeBid(amount int) {
 			findServer(serverPorts[1])
 			makeBid(amount)
 		} else {
-			fmt.Println("Server:", getErrorMsg(err.Error()))
+			log.Println("Server:", getErrorMsg(err.Error()))
 		}
 	} else {
-		fmt.Println("Bid registered!")
+		log.Println("Bid registered!")
 	}
 }
 
@@ -73,7 +74,7 @@ func checkStatus() string {
 		if strings.Contains(err.Error(), "connection refused") {
 			findServer(serverPorts[1])
 		} else {
-			fmt.Println("Server:", getErrorMsg(err.Error()))
+			log.Println("Server:", getErrorMsg(err.Error()))
 		}
 	}
 
@@ -84,5 +85,5 @@ func connectToServer(port int) {
 	conn, _ := grpc.Dial(":"+strconv.Itoa(port), grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	server = proto.NewAuctionClient(conn)
 
-	fmt.Println("Connected to port: ", strconv.Itoa(port))
+	log.Println("Connected to port: ", strconv.Itoa(port))
 }

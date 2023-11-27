@@ -5,7 +5,6 @@ import (
 	"distributed-auction-system/proto"
 	"errors"
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -89,7 +88,7 @@ func PassElection(ctx context.Context, currentCandidate *proto.RingLeaderTopDawg
 }
 
 func AnnounceResult(currentCandidate *proto.RingLeaderTopDawgG) {
-	fmt.Println("I am the leader")
+	log.Println("I am the leader")
 	for _, server := range servers {
 		go func(replica proto.AuctionClient) {
 			replica.Elected(context.Background(), currentCandidate)
@@ -123,7 +122,7 @@ func deadlineExceeded() bool {
 }
 
 func (server *Server) Elected(ctx context.Context, electedLeader *proto.RingLeaderTopDawgG) (*proto.Acknowledgement, error) {
-	fmt.Println(strconv.Itoa(int(electedLeader.ProcessID)) + " has been elected!")
+	log.Println(strconv.Itoa(int(electedLeader.ProcessID)) + " has been elected!")
 	leader = int(electedLeader.ProcessID)
 	isElecting = false
 	return &proto.Acknowledgement{}, nil
@@ -189,7 +188,7 @@ func connectToServer(port int) {
 	replica := proto.NewAuctionClient(conn)
 	servers[port] = replica
 
-	fmt.Println("Connected to port: ", strconv.Itoa(port))
+	log.Println("Connected to port: ", strconv.Itoa(port))
 }
 
 // code adapted from TAs
