@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	serverPorts    = [3]int{8080, 8081, 8082}
-	servers        = make(map[int]proto.AuctionClient) // map port to connections
-	serverId       = flag.Int("id", 1, "server id")
-	isElecting     = false
-	ongoingAuction = false
-	leader         = 8080
-	bid            int32
+	serverPorts     = [3]int{8080, 8081, 8082}
+	servers         = make(map[int]proto.AuctionClient) // map port to connections
+	serverId        = flag.Int("id", 1, "server id")
+	isElecting      = false
+	auctionDeadline int64
+	leader          = 8080
+	bid             int32
 )
 
 type Server struct {
@@ -46,7 +46,8 @@ func main() {
 	}
 
 	if server.port == 8080 {
-		AnnounceAuction(30)
+		auctionDeadline = time.Now().Add(30 * time.Second).Unix()
+		AnnounceAuction(auctionDeadline)
 	}
 
 	time.Sleep(time.Hour)
@@ -88,6 +89,7 @@ func PassElection(ctx context.Context, currentCandidate *proto.RingLeaderTopDawg
 }
 
 func AnnounceResult(currentCandidate *proto.RingLeaderTopDawgG) {
+	fmt.Println("I am the leader")
 	for _, server := range servers {
 		go func(replica proto.AuctionClient) {
 			replica.Elected(context.Background(), currentCandidate)
@@ -103,24 +105,21 @@ func AnnounceNewBid(newBid *proto.ServerBid) {
 	}
 }
 
-func AnnounceAuction(duration int) {
+func AnnounceAuction(deadline int64) {
 	for _, server := range servers {
 		go func(replica proto.AuctionClient) {
-			replica.StartAuction(context.Background(), &proto.AuctionDuration{Duration: int32(duration)})
+			replica.StartAuction(context.Background(), &proto.AuctionDeadline{Deadline: deadline})
 		}(server)
 	}
-	go RunAuction(duration)
 }
 
-func RunAuction(duration int) {
-	ongoingAuction = true
-	time.Sleep(time.Duration(duration) * time.Second)
-	ongoingAuction = false
-}
-
-func (Server) StartAuction(context.Context, *proto.AuctionDuration) (*proto.Empty, error) {
-	go RunAuction(30)
+func (Server) StartAuction(ctx context.Context, deadline *proto.AuctionDeadline) (*proto.Empty, error) {
+	auctionDeadline = deadline.Deadline
 	return &proto.Empty{}, nil
+}
+
+func deadlineExceeded() bool {
+	return time.Now().After(time.Unix(auctionDeadline, 0))
 }
 
 func (server *Server) Elected(ctx context.Context, electedLeader *proto.RingLeaderTopDawgG) (*proto.Acknowledgement, error) {
@@ -153,7 +152,7 @@ func (server *Server) WhoIsNewLeader(ctx context.Context, void *proto.Empty) (*p
 // API for client
 func (server *Server) Bid(ctx context.Context, clientBid *proto.ClientBid) (*proto.Acknowledgement, error) {
 	var err error
-	if !ongoingAuction {
+	if deadlineExceeded() {
 		err = errors.New("auction is over")
 	} else if clientBid.Bid > bid {
 		bid = clientBid.Bid
@@ -174,7 +173,7 @@ func (server *Server) UpdateBid(ctx context.Context, serverBid *proto.ServerBid)
 // API for client
 func (server *Server) Result(context.Context, *proto.Empty) (*proto.AuctionStatus, error) {
 	var status string
-	if ongoingAuction {
+	if !deadlineExceeded() {
 		status = "highest bid is " + strconv.Itoa(int(bid))
 	} else {
 		status = "result is " + strconv.Itoa(int(bid))

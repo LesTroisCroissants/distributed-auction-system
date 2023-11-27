@@ -42,6 +42,7 @@ func findServer(port int) {
 	fmt.Println("Connection has been lost, finding new server")
 	connectToServer(port)
 	primary, _ := server.WhoIsNewLeader(context.Background(), &proto.Empty{}) // timeout not implemented
+	fmt.Println("Found the new primary!")
 	connectToServer(int(primary.Port))
 }
 

@@ -12,7 +12,7 @@ service Auction {
 
   rpc Elected(RingLeaderTopDawgG) returns (Acknowledgement);
 
-  rpc StartAuction(AuctionDuration) returns (Empty);
+  rpc StartAuction(AuctionDeadline) returns (Empty);
 
   
   // Client RPC
@@ -30,8 +30,8 @@ message NewPrimary {
 }
 
 // Auction duration in seconds
-message AuctionDuration {
-  int32 Duration = 1;
+message AuctionDeadline {
+  int64 Deadline = 1;
 }
 
 // Bid from the client side
